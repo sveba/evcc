@@ -13,7 +13,7 @@ EVCC is an extensible EV Charge Controller with PV integration implemented in [G
 
 - simple and clean user interface
 - multiple [chargers](#charger):
-  - Open source: [openWB](https://openwb.de/), [EVSEWifi](https://www.evse-wifi.de) (includes smartWB)
+  - Open source: [openWB (including Pro)](https://openwb.de/), [EVSEWifi](https://www.evse-wifi.de) (includes smartWB)
   - Other commercial: ABL eMH1, Alfen Eve, cFos PowerBrain, Daheimladen, go-eCharger, Heidelberg Energy Control, KEBA/BMW, NRGkick, Wallbe, Mobile Charger Connect, EEBUS (experimental)
   - Build-your-own: Phoenix (includes ESL Walli), [SimpleEVSE](https://www.evse-wifi.de/produkt-schlagwort/simple-evse-wb/)
   - Smart-Home outlets: FritzDECT, Shelly, Tasmota, TP-Link
@@ -195,7 +195,7 @@ Available charger implementations are:
 - `alfen`: Alfen Eve (Single and Double, NG platform, [sponsors only](#sponsorship))
 - `cfos`: cFos PowerBrain charger (meters must configured separately, [sponsors only](#sponsorship))
 - `daheimladen`: Daheimladen charger (request your access token from [Daheimladen Support](info@daheimladen.de), [sponsors only](#sponsorship))
-- `easee`: Easee Home charger ([sponsors only](#sponsorship))
+- `easee`: Easee Home charger (supports 1p3p phase control, [sponsors only](#sponsorship))
 - `eebus`: EEBUS compatible chargers (experimental)
 - `evsewifi`: chargers with SimpleEVSE controllers using [EVSE-WiFi](https://www.evse-wifi.de/) (includes smartWB)
 - `go-e`: go-eCharger chargers (both local and cloud API are supported, at least firmware 040.0 required)
@@ -205,6 +205,7 @@ Available charger implementations are:
 - `nrgkick-bluetooth`: NRGkick chargers with Bluetooth connector (Linux only, not supported on Docker)
 - `nrgkick-connect`: NRGkick chargers with additional NRGkick Connect module
 - `openWB`: openWB chargers using openWB's MQTT interface (set `phases: true` to indicate if openWB is equipped with 1p3p capability- currently this cannot be auto detected)
+- `openWBpro`: openWB Pro chargers (supports 1p3p phase control)
 - `phoenix-em-eth`: chargers with Phoenix **EM**-CP-PP-**ETH** controllers
 - `phoenix-ev-eth`: chargers with Phoenix **EV**-CC-\*\*\*-**ETH** controllers (see [Preparation](#phoenix-emev-ethernet-controller-preparation-))
 - `phoenix-ev-ser`: chargers with Phoenix **EV**-CC-\*\*\*-**SER** serial controllers (Modbus RTU)
