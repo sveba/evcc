@@ -105,9 +105,9 @@ type Renault struct {
 	gigya, kamereon     configServer
 	gigyaJwtToken       string
 	accountID           string
-	batteryG            func() (interface{}, error)
-	cockpitG            func() (interface{}, error)
-	hvacG               func() (interface{}, error)
+	batteryG            func() (kamereonResponse, error)
+	cockpitG            func() (kamereonResponse, error)
+	hvacG               func() (kamereonResponse, error)
 }
 
 func init() {
@@ -360,7 +360,7 @@ func (v *Renault) cockpitAPI() (kamereonResponse, error) {
 func (v *Renault) SoC() (float64, error) {
 	res, err := v.batteryG()
 
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		return float64(res.Data.Attributes.BatteryLevel), nil
 	}
 
@@ -374,7 +374,7 @@ func (v *Renault) Status() (api.ChargeStatus, error) {
 	status := api.StatusA // disconnected
 
 	res, err := v.batteryG()
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		if res.Data.Attributes.PlugStatus > 0 {
 			status = api.StatusB
 		}
@@ -392,7 +392,7 @@ var _ api.VehicleRange = (*Renault)(nil)
 func (v *Renault) Range() (int64, error) {
 	res, err := v.batteryG()
 
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		return int64(res.Data.Attributes.BatteryAutonomy), nil
 	}
 
@@ -405,7 +405,7 @@ var _ api.VehicleOdometer = (*Renault)(nil)
 func (v *Renault) Odometer() (float64, error) {
 	res, err := v.cockpitG()
 
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		return res.Data.Attributes.TotalMileage, nil
 	}
 
@@ -418,7 +418,7 @@ var _ api.VehicleFinishTimer = (*Renault)(nil)
 func (v *Renault) FinishTime() (time.Time, error) {
 	res, err := v.batteryG()
 
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		timestamp, err := time.Parse(time.RFC3339, res.Data.Attributes.Timestamp)
 
 		if res.Data.Attributes.RemainingTime == nil {
@@ -442,7 +442,7 @@ func (v *Renault) Climater() (active bool, outsideTemp float64, targetTemp float
 		return false, 0, 0, api.ErrNotAvailable
 	}
 
-	if res, ok := res.(kamereonResponse); err == nil && ok {
+	if err == nil {
 		state := strings.ToLower(res.Data.Attributes.HvacStatus)
 
 		if state == "" {
