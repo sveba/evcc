@@ -91,13 +91,13 @@ func NewCarWingsFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		return nil, fmt.Errorf("login failed: %w", err)
 	}
 
-	v.statusG = provider.NewCached(func() (interface{}, error) {
+	v.statusG = provider.Cached[](func() (interface{}, error) {
 		return v.status()
-	}, cc.Cache).InterfaceGetter()
+	}, cc.Cache)
 
-	v.climateG = provider.NewCached(func() (interface{}, error) {
+	v.climateG = provider.Cached[](func() (interface{}, error) {
 		return v.session.ClimateControlStatus()
-	}, cc.Cache).InterfaceGetter()
+	}, cc.Cache)
 
 	return v, nil
 }

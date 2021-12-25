@@ -72,8 +72,8 @@ func NewOvmsFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		cache:     cc.Cache,
 	}
 
-	v.chargeG = provider.NewCached(v.batteryAPI, cc.Cache).InterfaceGetter()
-	v.statusG = provider.NewCached(v.statusAPI, cc.Cache).InterfaceGetter()
+	v.chargeG = provider.Cached[ovmsChargeResponse](v.batteryAPI, cc.Cache)
+	v.statusG = provider.Cached[ovmsStatusResponse](v.statusAPI, cc.Cache)
 
 	var err error
 	v.Jar, err = cookiejar.New(&cookiejar.Options{
@@ -128,7 +128,7 @@ func (v *Ovms) authFlow() error {
 }
 
 // batteryAPI provides battery-status api response
-func (v *Ovms) batteryAPI() (interface{}, error) {
+func (v *Ovms) batteryAPI() (ovmsChargeResponse, error) {
 	var resp ovmsChargeResponse
 
 	resp, err := v.chargeRequest()
@@ -148,7 +148,7 @@ func (v *Ovms) batteryAPI() (interface{}, error) {
 }
 
 // statusAPI provides vehicle status api response
-func (v *Ovms) statusAPI() (interface{}, error) {
+func (v *Ovms) statusAPI() (ovmsStatusResponse, error) {
 	var resp ovmsStatusResponse
 
 	resp, err := v.statusRequest()

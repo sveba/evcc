@@ -134,7 +134,7 @@ func NewTronityFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 	}
 
 	v.vid = vehicle.ID
-	v.bulkG = provider.NewCached(v.bulk, cc.Cache).InterfaceGetter()
+	v.bulkG = provider.Cached[](v.bulk, cc.Cache)
 
 	var status func() (api.ChargeStatus, error)
 	if funk.ContainsString(vehicle.Scopes, tronity.ReadCharge) {

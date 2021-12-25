@@ -76,9 +76,9 @@ func NewTeslaFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		v.Title_ = v.vehicle.DisplayName
 	}
 
-	v.chargeStateG = provider.NewCached(v.chargeState, cc.Cache).InterfaceGetter()
-	v.vehicleStateG = provider.NewCached(v.vehicleState, cc.Cache).InterfaceGetter()
-	v.driveStateG = provider.NewCached(v.driveState, cc.Cache).InterfaceGetter()
+	v.chargeStateG = provider.Cached[](v.chargeState, cc.Cache)
+	v.vehicleStateG = provider.Cached[](v.vehicleState, cc.Cache)
+	v.driveStateG = provider.Cached[](v.driveState, cc.Cache)
 
 	return v, nil
 }

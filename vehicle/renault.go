@@ -150,11 +150,9 @@ func NewRenaultFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		})
 	}
 
-	if err == nil {
-		v.batteryG = provider.NewCached(v.batteryAPI, cc.Cache).InterfaceGetter()
-		v.cockpitG = provider.NewCached(v.cockpitAPI, cc.Cache).InterfaceGetter()
-		v.hvacG = provider.NewCached(v.hvacAPI, cc.Cache).InterfaceGetter()
-	}
+	v.batteryG = provider.Cached[kamereonResponse](v.batteryAPI, cc.Cache)
+	v.cockpitG = provider.Cached[kamereonResponse](v.cockpitAPI, cc.Cache)
+	v.hvacG = provider.Cached[kamereonResponse](v.hvacAPI, cc.Cache)
 
 	return v, err
 }
@@ -314,7 +312,7 @@ func (v *Renault) kamereonVehicles(accountID string) ([]string, error) {
 }
 
 // batteryAPI provides battery-status api response
-func (v *Renault) batteryAPI() (interface{}, error) {
+func (v *Renault) batteryAPI() (kamereonResponse, error) {
 	uri := fmt.Sprintf("%s/commerce/v1/accounts/%s/kamereon/kca/car-adapter/v2/cars/%s/battery-status", v.kamereon.Target, v.accountID, v.vin)
 	res, err := v.kamereonRequest(uri)
 
@@ -329,7 +327,7 @@ func (v *Renault) batteryAPI() (interface{}, error) {
 }
 
 // hvacAPI provides hvac-status api response
-func (v *Renault) hvacAPI() (interface{}, error) {
+func (v *Renault) hvacAPI() (kamereonResponse, error) {
 	uri := fmt.Sprintf("%s/commerce/v1/accounts/%s/kamereon/kca/car-adapter/v1/cars/%s/hvac-status", v.kamereon.Target, v.accountID, v.vin)
 	res, err := v.kamereonRequest(uri)
 
@@ -344,7 +342,7 @@ func (v *Renault) hvacAPI() (interface{}, error) {
 }
 
 // cockpitAPI provides cockpit api response
-func (v *Renault) cockpitAPI() (interface{}, error) {
+func (v *Renault) cockpitAPI() (kamereonResponse, error) {
 	uri := fmt.Sprintf("%s/commerce/v1/accounts/%s/kamereon/kca/car-adapter/v2/cars/%s/cockpit", v.kamereon.Target, v.accountID, v.vin)
 	res, err := v.kamereonRequest(uri)
 

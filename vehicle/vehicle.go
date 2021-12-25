@@ -45,7 +45,7 @@ func NewConfigurableFromConfig(other map[string]interface{}) (api.Vehicle, error
 	}
 
 	if cc.Cache > 0 {
-		getter = provider.NewCached(getter, cc.Cache).FloatGetter()
+		getter = provider.Cached[](getter, cc.Cache).FloatGetter()
 	}
 
 	v := &Vehicle{

@@ -60,9 +60,9 @@ func NewVolvoFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		}),
 	}
 
-	v.statusG = provider.NewCached(func() (interface{}, error) {
+	v.statusG = provider.Cached[](func() (interface{}, error) {
 		return v.status()
-	}, cc.Cache).InterfaceGetter()
+	}, cc.Cache)
 
 	var err error
 	v.vin, err = ensureVehicle(cc.VIN, v.vehicles)

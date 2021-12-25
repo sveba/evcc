@@ -28,16 +28,16 @@ type Provider struct {
 // NewProvider provides the evcc vehicle api provider
 func NewProvider(api *API, vin string, cache time.Duration) *Provider {
 	impl := &Provider{
-		chargerG: provider.NewCached2[ChargerResponse](func() (ChargerResponse, error) {
+		chargerG: provider.Cached[ChargerResponse](func() (ChargerResponse, error) {
 			return api.Charger(vin)
 		}, cache),
-		statusG: provider.NewCached2[StatusResponse](func() (StatusResponse, error) {
+		statusG: provider.Cached[StatusResponse](func() (StatusResponse, error) {
 			return api.Status(vin)
 		}, cache),
-		climateG: provider.NewCached2[ClimaterResponse](func() (ClimaterResponse, error) {
+		climateG: provider.Cached[ClimaterResponse](func() (ClimaterResponse, error) {
 			return api.Climater(vin)
 		}, cache),
-		positionG: provider.NewCached2[PositionResponse](func() (PositionResponse, error) {
+		positionG: provider.Cached[PositionResponse](func() (PositionResponse, error) {
 			return api.Position(vin)
 		}, cache),
 		action: func(action, value string) error {
