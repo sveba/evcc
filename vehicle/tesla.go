@@ -65,24 +65,12 @@ func NewTeslaFromConfig(other map[string]interface{}) (api.Vehicle, error) {
 		return nil, err
 	}
 
-	vehicles, err := client.Vehicles()
-	if err != nil {
-		return nil, err
-	}
-
-	if cc.VIN == "" && len(vehicles) == 1 {
-		v.vehicle = vehicles[0]
-	} else {
-		for _, vehicle := range vehicles {
-			if vehicle.Vin == strings.ToUpper(cc.VIN) {
-				v.vehicle = vehicle
-			}
-		}
-	}
-
-	if v.vehicle == nil {
-		return nil, errors.New("vin not found")
-	}
+	cc.VIN, v.vehicle, err = ensureVehicleGen[*tesla.Vehicle, *tesla.Vehicle](
+		cc.VIN, client.Vehicles,
+		func(v *tesla.Vehicle)(string, *tesla.Vehicle) {
+			return v.Vin, v
+		},
+	)
 
 	if v.Title_ == "" {
 		v.Title_ = v.vehicle.DisplayName
