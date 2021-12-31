@@ -39,18 +39,18 @@ func NewConfigurableFromConfig(other map[string]interface{}) (api.Vehicle, error
 		return nil, err
 	}
 
-	getter, err := provider.NewFloatGetterFromConfig(cc.Charge)
+	chargeG, err := provider.NewFloatGetterFromConfig(cc.Charge)
 	if err != nil {
 		return nil, fmt.Errorf("charge: %w", err)
 	}
 
 	if cc.Cache > 0 {
-		getter = provider.Cached[](getter, cc.Cache).FloatGetter()
+		chargeG = provider.Cached[float64](chargeG, cc.Cache)
 	}
 
 	v := &Vehicle{
 		embed:   &cc.embed,
-		chargeG: getter,
+		chargeG: chargeG,
 	}
 
 	// decorate vehicle with Status

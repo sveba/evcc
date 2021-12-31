@@ -35,11 +35,12 @@ type ovmsConnectResponse struct {
 type Ovms struct {
 	*embed
 	*request.Helper
-	user, password, vehicleId, server string
-	cache                             time.Duration
-	isOnline                          bool
-	chargeG                           func() (interface{}, error)
-	statusG                           func() (interface{}, error)
+	user, password    string
+	vehicleId, server string
+	cache             time.Duration
+	isOnline          bool
+	chargeG           func() (ovmsChargeResponse, error)
+	statusG           func() (ovmsStatusResponse, error)
 }
 
 func init() {
@@ -166,7 +167,7 @@ func (v *Ovms) statusAPI() (ovmsStatusResponse, error) {
 func (v *Ovms) SoC() (float64, error) {
 	res, err := v.chargeG()
 
-	if res, ok := res.(ovmsChargeResponse); err == nil && ok {
+	if err == nil {
 		return strconv.ParseFloat(res.Soc, 64)
 	}
 
@@ -180,7 +181,7 @@ func (v *Ovms) Status() (api.ChargeStatus, error) {
 	status := api.StatusA // disconnected
 
 	res, err := v.chargeG()
-	if res, ok := res.(ovmsChargeResponse); err == nil && ok {
+	if err == nil {
 		if res.ChargePortOpen > 0 {
 			status = api.StatusB
 		}
@@ -198,7 +199,7 @@ var _ api.VehicleRange = (*Ovms)(nil)
 func (v *Ovms) Range() (int64, error) {
 	res, err := v.chargeG()
 
-	if res, ok := res.(ovmsChargeResponse); err == nil && ok {
+	if err == nil {
 		return strconv.ParseInt(res.EstimatedRange, 0, 64)
 	}
 
@@ -211,7 +212,7 @@ var _ api.VehicleOdometer = (*Ovms)(nil)
 func (v *Ovms) Odometer() (float64, error) {
 	res, err := v.statusG()
 
-	if res, ok := res.(ovmsStatusResponse); err == nil && ok {
+	if err == nil {
 		odometer, err := strconv.ParseFloat(res.Odometer, 64)
 		if err == nil {
 			return odometer / 10, nil
@@ -227,7 +228,7 @@ var _ api.VehicleFinishTimer = (*Ovms)(nil)
 func (v *Ovms) FinishTime() (time.Time, error) {
 	res, err := v.chargeG()
 
-	if res, ok := res.(ovmsChargeResponse); err == nil && ok {
+	if err == nil {
 		cef, err := strconv.ParseInt(res.ChargeEtrFull, 0, 64)
 		if err == nil {
 			return time.Now().Add(time.Duration(cef) * time.Minute), nil
