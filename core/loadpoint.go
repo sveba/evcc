@@ -969,7 +969,7 @@ func (lp *LoadPoint) pvScalePhases(availablePower, minCurrent, maxCurrent float6
 
 	// if more active phases observed than configured, update internal state accordingly
 	if phases < lp.activePhases {
-		lp.log.WARN.Printf("inconsistent phases: %dp configured < %dp observed active, updating internal state to %dp", phases, lp.activePhases, lp.activePhases)
+		lp.log.WARN.Printf("inconsistent phases: %dp configured < %dp observed active, updating internal state to 3p", phases, lp.activePhases)
 		phases = 3
 		lp.setPhases(3)
 	}
@@ -993,11 +993,6 @@ func (lp *LoadPoint) pvScalePhases(availablePower, minCurrent, maxCurrent float6
 			lp.log.DEBUG.Println("phase disable timer elapsed")
 			if err := lp.scalePhases(1); err == nil {
 				lp.log.DEBUG.Printf("switched phases: 1p @ %.0fW", availablePower)
-
-				// if charging is disabled, current detection will not switch active phases to 1p
-				// make sure we can start charging by assuming 1p during next cycle
-				lp.activePhases = 1
-
 				return true
 			} else {
 				lp.log.ERROR.Printf("switch phases: %v", err)
@@ -1178,7 +1173,8 @@ func (lp *LoadPoint) updateChargePower() {
 		lp.log.DEBUG.Printf("charge power: %.0fW", value)
 		lp.publish("chargePower", value)
 
-		if lp.chargePower < 0 {
+		// use -1 for https://github.com/evcc-io/evcc/issues/2153
+		if lp.chargePower < -1 {
 			lp.log.WARN.Printf("charge power must not be negative: %.0f", lp.chargePower)
 		}
 
@@ -1195,10 +1191,11 @@ func (lp *LoadPoint) updateChargeCurrents() {
 	lp.chargeCurrents = nil
 	phaseMeter, ok := lp.chargeMeter.(api.MeterCurrent)
 	if !ok {
-		// guess active phases from power consumption
-		// assumes that chargePower has been updated before
+		// Guess active phases from power consumption. Assumes that chargePower has been
+		// updated before. Discussion in https://github.com/evcc-io/evcc/issues/2146 and
+		// https://github.com/evcc-io/evcc/issues/2177
 		if lp.charging() && lp.chargeCurrent > 0 {
-			phases := int(math.Ceil(lp.chargePower / Voltage / lp.chargeCurrent))
+			phases := int(math.Ceil(lp.chargePower/Voltage/lp.chargeCurrent - 0.05))
 			if phases >= 1 && phases <= 3 {
 				lp.activePhases = phases
 				lp.log.DEBUG.Printf("detected phases: %dp (%.1fA @ %.0fW)", lp.activePhases, lp.chargeCurrent, lp.chargePower)
@@ -1429,7 +1426,6 @@ func (lp *LoadPoint) Update(sitePower float64, cheap bool, batteryBuffered bool)
 
 	case mode == api.ModeMinPV || mode == api.ModePV:
 		targetCurrent := lp.pvMaxCurrent(mode, sitePower, batteryBuffered)
-		lp.log.DEBUG.Printf("pv max charge current: %.3gA", targetCurrent)
 
 		var required bool // false
 		if targetCurrent == 0 && lp.climateActive() {

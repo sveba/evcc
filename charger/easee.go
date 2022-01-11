@@ -50,6 +50,7 @@ type Easee struct {
 	current               float64
 	chargerEnabled        bool
 	enabledStatus         bool
+	phaseMode             int
 	currentPower, sessionEnergy,
 	currentL1, currentL2, currentL3 float64
 }
@@ -164,14 +165,12 @@ func NewEasee(user, password, charger string, cache time.Duration) (*Easee, erro
 	}
 
 	// wait for first update
-	timer := time.NewTimer(request.Timeout)
 	done := make(chan struct{})
-
 	go c.waitForInitialUpdate(done)
 
 	select {
 	case <-done:
-	case <-timer.C:
+	case <-time.After(request.Timeout):
 		err = api.ErrTimeout
 	}
 
@@ -264,6 +263,13 @@ func (c *Easee) observe(typ string, i json.RawMessage) {
 
 	c.mux.L.Lock()
 	defer c.mux.L.Unlock()
+
+	if c.updated.IsZero() {
+		go func() {
+			<-time.After(3 * time.Second)
+			c.mux.Broadcast()
+		}()
+	}
 	c.updated = time.Now()
 
 	switch res.ID {
@@ -279,6 +285,8 @@ func (c *Easee) observe(typ string, i json.RawMessage) {
 		c.currentL2 = value.(float64)
 	case easee.IN_CURRENT_T5:
 		c.currentL3 = value.(float64)
+	case easee.PHASE_MODE:
+		c.phaseMode = value.(int)
 	case easee.DYNAMIC_CHARGER_CURRENT:
 		c.dynamicChargerCurrent = value.(float64)
 		// ensure that charger current matches evcc's expectation
@@ -305,9 +313,6 @@ func (c *Easee) observe(typ string, i json.RawMessage) {
 			value.(int) == easee.ModeAwaitingStart ||
 			value.(int) == easee.ModeCompleted ||
 			value.(int) == easee.ModeReadyToCharge
-	case 219:
-		// HACK observation 219 is the last value received- broadcast to signal ready condition
-		c.mux.Broadcast()
 	}
 
 	c.log.TRACE.Printf("%s %s: %s %.4v", typ, res.Mid, res.ID, value)
@@ -444,15 +449,18 @@ func (c *Easee) Phases1p3p(phases int) error {
 			phases = 2 // mode 2 means 3p
 		}
 
-		data := easee.ChargerSettings{
-			PhaseMode: &phases,
-		}
+		// change phaseMode only if necessary
+		if phases != c.phaseMode {
+			data := easee.ChargerSettings{
+				PhaseMode: &phases,
+			}
 
-		uri := fmt.Sprintf("%s/chargers/%s/settings", easee.API, c.charger)
+			uri := fmt.Sprintf("%s/chargers/%s/settings", easee.API, c.charger)
 
-		var resp *http.Response
-		if resp, err = c.Post(uri, request.JSONContent, request.MarshalJSON(data)); err == nil {
-			resp.Body.Close()
+			var resp *http.Response
+			if resp, err = c.Post(uri, request.JSONContent, request.MarshalJSON(data)); err == nil {
+				resp.Body.Close()
+			}
 		}
 	}
 

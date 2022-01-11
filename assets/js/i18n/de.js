@@ -2,8 +2,9 @@ export default {
   header: { docs: "Dokumentation", blog: "Blog", github: "GitHub" },
   footer: {
     version: {
-      version: "Version",
-      availableShort: "verfügbar",
+      versionShort: "v{installed}",
+      versionLong: "Version {installed}",
+      availableShort: "Update",
       availableLong: "Update verfügbar",
       modalTitle: "Update verfügbar",
       modalUpdateStarted: "Nach der Aktualisierung wird evcc neu gestartet.",
@@ -17,17 +18,38 @@ export default {
       modalUpdateStatusStart: "Aktualisierung gestartet: ",
       modalUpdateStatusFailed: "Aktualisierung nicht möglich: ",
     },
+    savings: {
+      footerShort: "{percent}% Sonne",
+      footerLong: "{percent}% Sonnenenergie",
+      modalTitleShort: "{total} kWh geladen · {percent}% Sonne",
+      modalTitleLong: "{total} kWh geladen · {percent}% Sonnenenergie",
+      modalChartGrid: "Netz {grid} kWh",
+      modalChartSelf: "Sonne {self} kWh",
+      modalSavingsPrice: "Effektiver Energiepreis",
+      modalSavingsTotal: "Ersparnis gegenüber Netzbezug",
+      modalExplaination: "Berechnung",
+      modalExplainationGrid: "Netz {gridPrice}",
+      modalExplainationFeedIn: "Einspeisung {feedInPrice}",
+      modalServerStart: "Seit Serverstart {since}.",
+      modalNoData: "noch nicht geladen",
+      experimentalLabel: "experimentell",
+      experimentalText: "Unplausible Werte? Fragen zur Ansicht? Meld dich gerne in den",
+    },
     sponsor: {
-      sponsoredShort: "Danke",
-      sponsoredLong: "Danke {sponsor}",
-      supportProjectShort: "unterstützen",
-      supportProjectLong: "Projekt unterstützen",
+      thanks: "Danke für deine Unterstützung, {sponsor}! Das hilft uns bei der Weiterentwicklung.",
+      confetti: "Lust auf etwas Sponsor-Konfetti?",
+      supportUs:
+        "Wir möchten effizientes Zuhause-Laden zum Standard für möglichst viele Menschen machen. Helfe uns indem du die Weiterentwicklung und Pflege des Projekts unterstützt.",
+      sticker: "...oder evcc Sticker?",
+      confettiPromise: "Es gibt auch Sticker und digitales Konfetti ;)",
+      becomeSponsor: "Werde jetzt GitHub Sponsor",
     },
   },
   notifications: {
     modalTitle: "Meldungen",
     dismissAll: "Meldungen entfernen",
   },
+
   main: {
     energyflow: {
       noEnergy: "Kein Energiefluss",

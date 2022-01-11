@@ -11,6 +11,7 @@ import (
 	"github.com/evcc-io/evcc/api"
 	"github.com/evcc-io/evcc/core/loadpoint"
 	"github.com/evcc-io/evcc/push"
+	"github.com/evcc-io/evcc/tariff"
 	"github.com/evcc-io/evcc/util"
 )
 
@@ -42,8 +43,9 @@ type Site struct {
 	pvMeters      []api.Meter // PV generation meters
 	batteryMeters []api.Meter // Battery charging meters
 
-	tariff     api.Tariff   // Tariff
-	loadpoints []*LoadPoint // Loadpoints
+	tariffs    tariff.Tariffs // Tariff
+	loadpoints []*LoadPoint   // Loadpoints
+	savings    *Savings       // Savings
 
 	// cached state
 	gridPower       float64 // Grid power
@@ -67,7 +69,7 @@ func NewSiteFromConfig(
 	cp configProvider,
 	other map[string]interface{},
 	loadpoints []*LoadPoint,
-	tariff api.Tariff,
+	tariffs tariff.Tariffs,
 ) (*Site, error) {
 	site := NewSite()
 	if err := util.DecodeOther(other, &site); err != nil {
@@ -75,8 +77,9 @@ func NewSiteFromConfig(
 	}
 
 	Voltage = site.Voltage
-	site.tariff = tariff
 	site.loadpoints = loadpoints
+	site.tariffs = tariffs
+	site.savings = NewSavings(tariffs)
 
 	if site.Meters.GridMeterRef != "" {
 		site.gridMeter = cp.Meter(site.Meters.GridMeterRef)
@@ -397,8 +400,12 @@ func (site *Site) update(lp Updater) {
 	site.log.DEBUG.Println("----")
 
 	var cheap bool
-	if site.tariff != nil {
-		cheap = site.tariff.IsCheap()
+	var err error
+	if site.tariffs.Grid != nil {
+		cheap, err = site.tariffs.Grid.IsCheap()
+		if err != nil {
+			cheap = false
+		}
 	}
 
 	if sitePower, err := site.sitePower(); err == nil {
@@ -414,12 +421,30 @@ func (site *Site) update(lp Updater) {
 
 		site.Health.Update()
 	}
+
+	// update savings
+
+	// TODO: use a proper interface, use meter readings instead of current power for better results
+	var totalChargePower float64
+	for _, lp := range site.loadpoints {
+		totalChargePower += lp.chargePower
+	}
+
+	site.savings.Update(site, site.gridPower, site.pvPower, site.batteryPower, totalChargePower)
+}
+
+// prepare publishes initial values
+func (site *Site) prepare() {
+	site.publish("currency", site.tariffs.Currency.String())
+	site.publish("savingsSince", site.savings.Since().Unix())
 }
 
 // Prepare attaches communication channels to site and loadpoints
 func (site *Site) Prepare(uiChan chan<- util.Param, pushChan chan<- push.Event) {
 	site.uiChan = uiChan
 	site.lpUpdateChan = make(chan *LoadPoint, 1) // 1 capacity to avoid deadlock
+
+	site.prepare()
 
 	for id, lp := range site.loadpoints {
 		lpUIChan := make(chan util.Param)

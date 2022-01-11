@@ -55,21 +55,21 @@ func NewWarpFromConfig(other map[string]interface{}) (api.Charger, error) {
 	}
 
 	if cc.UseMeter != nil {
-		// TODO remove
+		// TODO deprecated
 		util.NewLogger("warp").WARN.Println("usemeter is deprecated and will be removed in a future release")
 	}
 
-	isPro := wb.isPro()
+	hasMeter := wb.hasMeter()
 
 	var currentPower func() (float64, error)
 	var totalEnergy func() (float64, error)
-	if isPro || wb.hasMeter() {
+	if hasMeter {
 		currentPower = wb.currentPower
 		totalEnergy = wb.totalEnergy
 	}
 
 	var currents func() (float64, float64, float64, error)
-	if isPro {
+	if hasMeter && wb.hasCurrents() {
 		currents = wb.currents
 	}
 
@@ -130,20 +130,20 @@ func (wb *Warp) hasMeter() bool {
 	).StringGetter()(); err == nil {
 		var res warp.MeterState
 		if err := json.Unmarshal([]byte(state), &res); err == nil {
-			return res.State == 2
+			return res.State == 2 || len(res.PhasesConnected) > 0
 		}
 	}
 
 	return false
 }
 
-func (wb *Warp) isPro() bool {
+func (wb *Warp) hasCurrents() bool {
 	if state, err := provider.NewMqtt(wb.log, wb.client,
-		fmt.Sprintf("%s/evse/low_level_state", wb.root), 1, 0,
+		fmt.Sprintf("%s/meter/detailed_values", wb.root), 1, 0,
 	).StringGetter()(); err == nil {
-		var res warp.LowLevelState
+		var res []float64
 		if err := json.Unmarshal([]byte(state), &res); err == nil {
-			return len(res.AdcValues) > 2
+			return len(res) > 5
 		}
 	}
 
@@ -173,8 +173,8 @@ func (wb *Warp) Enable(enable bool) error {
 	return err
 }
 
-func (wb *Warp) status() (warp.Status, error) {
-	var res warp.Status
+func (wb *Warp) status() (warp.EvseState, error) {
+	var res warp.EvseState
 
 	s, err := wb.statusG()
 	if err == nil {
@@ -203,7 +203,7 @@ func (wb *Warp) autostart() (bool, error) {
 func (wb *Warp) isEnabled() (bool, error) {
 	enabled, err := wb.autostart()
 
-	var status warp.Status
+	var status warp.EvseState
 	if err == nil {
 		status, err = wb.status()
 	}
@@ -245,7 +245,7 @@ func (wb *Warp) Enabled() (bool, error) {
 
 // Status implements the api.Charger interface
 func (wb *Warp) Status() (api.ChargeStatus, error) {
-	var status warp.Status
+	var status warp.EvseState
 
 	s, err := wb.statusG()
 	if err == nil {
