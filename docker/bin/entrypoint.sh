@@ -23,9 +23,5 @@ if [ -f ${HASSIO_OPTIONSFILE} ]; then
         fi
     fi
 else
-    if [ "$1" == '"evcc"' ] || expr "$1" : '-*' > /dev/null; then
-        exec evcc "$@"
-    else
-        exec "$@"
-    fi
+    exec "$@"
 fi

@@ -68,16 +68,20 @@ RUN RELEASE=${RELEASE} GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 # STEP 3 build a small image including module support
 FROM alpine:3.15
 
-WORKDIR /app
-
 ENV TZ=Europe/Berlin
+
+# Create user
+RUN adduser -D evcc && \
+    mkdir /evcc && \
+	chown evcc /evcc && \
+	chmod 777 /evcc
 
 # Import from builder
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /build/evcc /usr/local/bin/evcc
 
-COPY docker/bin/* /app/
+COPY docker/bin/* /bin/
 
 # UI and /api
 EXPOSE 7070/tcp
@@ -90,5 +94,9 @@ EXPOSE 9522/udp
 
 HEALTHCHECK --interval=60s --start-period=60s --timeout=30s --retries=3 CMD [ "evcc", "health" ]
 
-ENTRYPOINT [ "/app/entrypoint.sh" ]
-CMD [ "evcc" ]
+USER evcc
+
+WORKDIR /evcc
+
+ENTRYPOINT [ "/bin/entrypoint.sh" ]
+CMD [ "evcc", "--sqlite", "/evcc/evcc.db" ]
