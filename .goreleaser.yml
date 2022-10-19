@@ -27,6 +27,10 @@ builds:
       - goos: windows
         goarch: arm64
 
+dockers:
+  - image_templates:
+    - andig/evcc
+
 archives:
   - builds:
       - evcc
